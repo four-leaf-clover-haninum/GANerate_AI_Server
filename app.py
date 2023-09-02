@@ -198,18 +198,26 @@ def make_zip(): # 멀티 프로세싱 처리
                 else:
                     loader = torch.utils.data.DataLoader(dataset, batch_size=len(dataset), shuffle=True,
                                                          collate_fn=my_collate)  # 모든 이미지를 한 번에 로드
-                    all_images = []  # 모든 이미지를 담을 리스트 초기화
+                    all_image_paths = []  # 모든 이미지를 담을 리스트 초기화
                     # 모든 이미지를 all_images 리스트에 담기
-                    for i, images in enumerate(loader):
-                        all_images.extend(images)
-                        # all_images.append(images)
+                    # for i, images in enumerate(loader):
+                    #     all_images.extend(images)
+                    #     # all_images.append(images)
+
+                    for root, _, files in os.walk(new_folder_path):  # dataset_root는 이미지 파일들이 있는 디렉토리 경로입니다.
+                        for file in files:
+                            if file.endswith((".jpg", ".jpeg", ".png")):  # 이미지 파일인 경우만 고려하도록 확장자를 지정합니다.
+                                file_path = os.path.join(root, file)
+                                all_image_paths.append(file_path)
 
                     total_saved = 1  # 총 저장된 이미지 수 초기화
 
                     while total_saved <= max_saved:
                         # 랜덤하게 하나의 이미지를 선택
-                        image = random.choice(all_images)
+                        image = random.choice(all_image_paths)
                         print(type(image))
+
+                        image = Image.open(image).convert("RGB")
 
                         # 선택한 이미지에 증강 적용
                         transformed_image = data_transforms(image)  # PIL 이미지 변환
@@ -365,11 +373,6 @@ def make_zip(): # 멀티 프로세싱 처리
                 db = pymysql.connect(host=config.host, user=config.user, password=config.password, db=config.db,
                                      charset=config.charset)  # 별도 컨피그에 정리
                 cursor = db.cursor()
-
-                # zip 파일 db insert
-                # conn = mysql.connection
-                # cursor = conn.cursor()
-
                 print("connect!!")
 
                 sql = "INSERT INTO zip_file(upload_url, upload_file_name, original_file_name, size_gb) VALUES ('%s', '%s', '%s', '%f')" % (uploaded_url, upload_zip_file_name, original_file_name, zip_data_size_gb)
@@ -382,13 +385,6 @@ def make_zip(): # 멀티 프로세싱 처리
 
                 # INSERT 한 레코드의 ID 값 가져오기
                 inserted_zipfile_id = cursor.lastrowid  # 이 값은 zip_file 테이블에 INSERT한 레코드의 ID입니다.
-                # cursor.close()
-                # conn.close()
-
-                # data_product 테이블 업데이트
-                # conn = mysql.connection
-                # cursor = conn.cursor()
-
                 print(str(inserted_zipfile_id))
 
                 update_sql = "UPDATE data_product SET zipfile_id = '%d' WHERE data_product_id = '%d'" % (inserted_zipfile_id, data_product_id)
@@ -401,9 +397,6 @@ def make_zip(): # 멀티 프로세싱 처리
                 ganerated_image_path = os.path.join(output_path, "all_images")
                 num_images_to_upload = 3
 
-                # 폴더에서 이미지 불러오기
-                # all_images = [Image.open(os.path.join(ganerated_image_path, f)) for f in os.listdir(ganerated_image_path) if
-                #               f.endswith(('.jpg', '.jpeg', '.png'))]
                 all_image_files = [f for f in os.listdir(ganerated_image_path) if f.endswith(('.jpg', '.jpeg', '.png'))]
 
                 # 랜덤하게 이미지 선택
@@ -460,8 +453,6 @@ def make_zip(): # 멀티 프로세싱 처리
         print("apiTest elapsed: ", time.time() - start_time)  # seconds
         print('apiTest OUT')
 
-        # result = {"originalFileName": original_file_name, "uploadFileName":upload_zip_file_name, "uploadUrl":uploaded_url, "sizeGb":zip_data_size_gb}
-        #
         return jsonify("", 200)
 
     except Exception as e:
@@ -469,7 +460,6 @@ def make_zip(): # 멀티 프로세싱 처리
 
     finally:
         db.close()
-
 
 def to_device(data, device):
     """Move tensor(s) to chosen device"""
