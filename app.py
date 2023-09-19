@@ -134,7 +134,7 @@ def gara():
         time.sleep(100)
 
         # 이동하려는 디렉터리 경로를 지정합니다.
-        directory_path = "/root"
+        directory_path = "/home/ubuntu"
 
         # 지정한 디렉터리로 이동합니다.
         os.chdir(directory_path)
@@ -190,7 +190,7 @@ def gara():
         print("update dataProduct!")
 
         # 압축 해제할 디렉토리 경로
-        extracted_dir_path = "/root/gan_zip"
+        extracted_dir_path = "/home/ubuntu/gan_zip"
 
         # 압축 파일을 압축 해제
         with zipfile.ZipFile(gan_zip_path, 'r') as zip_ref:
